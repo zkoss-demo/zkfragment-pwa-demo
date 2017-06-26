@@ -1,0 +1,20 @@
+{
+  "name": "zkfragment-pwa-demo",
+  "short_name": "zk-pwa-demo",
+  "icons": [
+    {
+      "src": "static/zk_192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "static/zk_512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "index.html?home=1",
+  "display": "standalone",
+  "background_color": "#007CA7",
+  "theme_color": "#007CA7"
+}

@@ -1,0 +1,29 @@
+body {
+    background-color: #2F2E2C;
+}
+.heading {
+    margin-left: 2em;
+    height: 10vh;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #4986E7;
+    letter-spacing: 0;
+    display: inline-block;
+}
+.container {
+    min-width: 790px;
+    margin: 0 auto;
+    background-color: #fff;
+    height: 100vh;
+}
+.formBtn {
+    float: right;
+    margin-top: 1.5em;
+    margin-left: 0.5em;
+}
+.eachrow:hover {
+    background-color: #eee;
+}
+.headerFooter {
+    font-weight: 700;
+}
