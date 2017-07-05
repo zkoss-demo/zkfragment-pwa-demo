@@ -11,10 +11,8 @@ body {
     display: inline-block;
 }
 .container {
-    min-width: 790px;
     margin: 0 auto;
     background-color: #fff;
-    height: 100vh;
 }
 .formBtn {
     float: right;

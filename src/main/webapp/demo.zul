@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?page title="ZK Fragment PWA Demo"?>
 <?link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"?>
 <?link rel="stylesheet" type="text/css" href="css/FragmentDemo.css"?>
+<?link rel="stylesheet" type="text/css" href="css/offline-theme-default-indicator.css"?>
 <?meta http-equiv="X-UA-Compatible" content="IE=edge"?>
 <?meta name="viewport" content="width=device-width, initial-scale=1"?>
 <?meta name="theme-color" content="#007CA7"?>
 <?link rel="manifest" href="manifest.json"?>
+<?script src="static/offline.min.js"?>
+<?script src="static/bundle.js"?>
 <!--
 FragmentDemo.zul
 
@@ -19,35 +23,71 @@ Copyright (C) 2016 Potix Corporation. All Rights Reserved.
 
 -->
 <nodom viewModel="@id('vm') @init('org.zkoss.fragment.demo.FragmentDemoVM')">
-    <script>
-	if ('serviceWorker' in navigator) {
-		window.addEventListener('load', function() {
-			navigator.serviceWorker.register('sw.js').then(function(registration) {
-				// Registration was successful
-				console.log('ServiceWorker registration successful with scope: ', registration.scope);
-			}, function(err) {
-				// registration failed :(
-				console.log('ServiceWorker registration failed: ', err);
+	<script>
+		zk.afterMount(function () {
+			var fgs = zk.Widget.getElementsById('fg');
+			var fg = zk.$(fgs[fgs.length - 1]);
+			fg.onOffline('command', function (name, args) {
+				// console.log('[@command]', name, args);
+				if (name == 'toggleEditMethod') {
+					var exps = fg.load('exps');
+					fg.save('editExp', exps[args.id]);
+					fg.save('toggleEdit', true);
+					return;
+				}
+				if (name == 'addExpense') {
+					fg.save('toggleEdit', false);
+					fg.save('editExp', {});
+					return;
+				}
+				if (name == 'submitEditExpense') {
+					var exps = fg.load('exps'),
+						editExp = fg.load('editExp'),
+						total = fg.load('total'),
+						oldEditExp = exps[editExp.id];
+					editExp.amount = parseInt(editExp.amount) || 0;
+					exps[editExp.id] = editExp;
+					fg.save('exps', exps);
+					fg.save('toggleEdit', false);
+					fg.save('editExp', {});
+					fg.save('total', total - oldEditExp.amount + editExp.amount);
+					return;
+				}
+				if (name == 'submitNewExpense') {
+					var exps = fg.load('exps');
+						newExp = fg.load('newExp'),
+						total = fg.load('total');
+					newExp.amount = parseInt(newExp.amount) || 0;
+					exps.push({id: exps.length, date: newExp.date, category: newExp.category, amount: newExp.amount});
+					fg.save('exps', exps);
+					fg.save('newExp', {id: exps.length, date: newExp.date, category: '', amount: 0});
+					fg.save('total', total + newExp.amount);
+					return;
+				}
+			});
+			fg.onOffline('save', function (key, val) {
+				// console.log('[@save]', key, val);
+				fg.save(key, val);
+			});
+			fg.onOffline('beforeRecover', function (packet) {
+				packet['exps'] = fg.load('exps');
+				packet['newExp'] = fg.load('newExp');
+				packet['editExp'] = fg.load('editExp');
+				packet['toggleEdit'] = fg.load('toggleEdit');
 			});
 		});
-	}
-
-	zAu.ajaxErrorHandler = function (req, status, statusText, ajaxReqTries) {
-		zAu.cmd0.showNotification(msgzk.FAILED_TO_RESPONSE, 'info', null, null, null, null, 1500, true);
-		return 0; // no retry
-	};
-    </script>
+	</script>
 	<fragment id="fg" recoverId="${vm.recoverId}"
 		exps="@bind(vm.expenses)" toggleEdit="@bind(vm.toggleEdit)"
 		newExp="@bind(vm.newExpense)" editExp="@bind(vm.editExpense)"
 		total="@bind(vm.totalExpenses)"
-		onRecover="@command('recover', vm=event.data)"><![CDATA[
+		onRecover="@command('recover', vm=event.vm, packet=event.packet)"><![CDATA[
 		<div class="container">
 			<div>
 				<h1 class="heading">ZK Client Binding with Fragment</h1>
 			</div>
 			<div class="row">
-				<div class="col-xs-6 col-md-5 col-md-offset-1 list-group">
+				<div class="col-xs-12 col-md-5 col-md-offset-1 list-group">
 					<forEach items="@load(exps)" begin="0" end="" step="1" varStatus="s">
 						<if test="@load(s.first)">
 							<div class="headerFooter row list-group-item">
@@ -113,7 +153,7 @@ Copyright (C) 2016 Potix Corporation. All Rights Reserved.
 						</if>
 					</forEach>
 				</div>
-				<div class="col-xs-6 col-md-5">
+				<div class="col-xs-11 col-xs-offset-1 col-md-5">
 					<if test="@load(toggleEdit == false)">
 						<form class="form-horizontal">
 							<div class="form-group">
@@ -131,7 +171,8 @@ Copyright (C) 2016 Potix Corporation. All Rights Reserved.
 							<div class="form-group">
 								<label for="inputPassword" class="col-xs-2 control-label">Amount</label>
 								<div class="col-xs-10">
-									<input type="text" class="form-control" placeholder="amount" value="@bind(newExp.amount)"/>
+									<input type="text" class="form-control" placeholder="amount" value="@bind(newExp.amount) @jsvalidator('validateNumber')"/>
+									<span textContent="@load(vmsgs['number_required'])"/>
 								</div>
 							</div>
 						</form>
@@ -154,7 +195,8 @@ Copyright (C) 2016 Potix Corporation. All Rights Reserved.
 							<div class="form-group">
 								<label for="inputPassword" class="col-xs-2 control-label">Amount</label>
 								<div class="col-xs-10">
-									<input type="text" class="form-control" placeholder="amount" value="@bind(editExp.amount)"/>
+									<input type="text" class="form-control" placeholder="amount" value="@bind(editExp.amount) @jsvalidator('validateNumber2')"/>
+									<span textContent="@load(vmsgs['number_required2'])"/>
 								</div>
 							</div>
 						</form>

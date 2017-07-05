@@ -7,3 +7,4 @@ This project is to demonstrate ZK Fragment component, and it is distributed unde
 
 ## License
 * Demo Code - [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0)
+* [Offline.js](https://github.com/HubSpot/offline) - MIT License
